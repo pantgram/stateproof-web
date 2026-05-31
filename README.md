@@ -1,73 +1,132 @@
-# React + TypeScript + Vite
+# StateProof Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Proof that your automated workflows ran exactly as intended.
 
-Currently, two official plugins are available:
+StateProof is a web dashboard for creating **tamper-evident audit trails for automated workflows** — AI agents, RPA bots, scheduled jobs, and integrations. It uses **Merkle trees** to provide cryptographic proof that automated processes ran exactly as intended. Users can verify session integrity without trusting the platform — verification is mathematical.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **Merkle Tree Audit Trails** — Every workflow session is hashed into a Merkle tree. The root hash changes if any event is tampered with.
+- **Per-Session Proofs** — Generate compact Merkle proofs for any session. Third parties can verify without the full dataset.
+- **Interactive Tree Visualization** — ReactFlow-based interactive graph showing tree nodes (root, internal, leaf). Click a leaf to open session details.
+- **Live Verification Panel** — Paste session JSON data and verify against the stored Merkle root in real time.
+- **Stateless Verification** — Verify a proof (leaf hash + proof path + root) without authentication via the public `/verify` endpoint.
+- **JWT Auth with Refresh Tokens** — Access token in memory, refresh token in an HttpOnly cookie. Auto-refresh on 401 with request queuing.
+- **API Client Management** — Create, rotate, and delete API clients with scoped keys for programmatic access.
+- **Organization-Scoped Multi-Tenancy** — Users belong to organizations; all data is org-scoped.
+- **Admin Approval Flow** — New signups may require admin approval via an email link.
+- **Event-Level Audit Trail** — Events include executor type (agent, RPA, human, integration, job, system), event type (tool call, decision, approval, API call, error, trigger), timestamps, and arbitrary data payloads.
+- **Dark-Themed UI** — Fully dark mode design with a custom color palette.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+| Layer | Technology |
+|---|---|
+| Framework | React 19 + TypeScript 6 |
+| Build Tool | Vite 8 |
+| Routing | React Router DOM 6 |
+| Server State | TanStack React Query 5 |
+| Styling | Tailwind CSS 3 + CSS variables |
+| UI Primitives | Radix UI |
+| Forms | React Hook Form 7 + Zod |
+| HTTP Client | Axios |
+| Graph Visualization | ReactFlow 11 + Dagre |
+| Icons | Lucide React |
+| Package Manager | pnpm |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Node.js** >= 18
+- **pnpm** (install via `corepack enable` or `npm i -g pnpm`)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Getting Started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Clone the repository
+git clone <repo-url>
+cd stateproof-web
+
+# Install dependencies
+pnpm install
+
+# Copy environment file and configure
+cp .env.example .env
+
+# Start the development server
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Variable | Description | Default |
+|---|---|---|
+| `VITE_API_URL` | Backend API base URL | `http://localhost:8000` |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Project Structure
+
 ```
+src/
+├── App.tsx                  # Router configuration
+├── main.tsx                 # Entry point (QueryClient + AuthProvider + App)
+├── index.css                # Tailwind + CSS custom properties (dark theme)
+├── lib/
+│   ├── api.ts               # Axios instance with JWT interceptors & auto-refresh
+│   ├── auth.ts              # Refresh token cookie helpers
+│   ├── types.ts             # TypeScript type definitions
+│   ├── utils.ts             # Utility functions (truncateHash, formatDate, cn)
+│   └── cn.ts                # clsx + tailwind-merge utility
+├── context/
+│   └── AuthContext.tsx       # Auth state (user, tokens, login/logout)
+├── queries/
+│   ├── useMe.ts             # Current user
+│   ├── useWorkflows.ts      # Workflow list
+│   ├── useWorkflow.ts       # Single workflow
+│   ├── useSessions.ts       # Session list
+│   ├── useSession.ts        # Single session
+│   ├── useSessionCount.ts   # Session count
+│   ├── useClients.ts        # API client CRUD
+│   ├── useProof.ts          # Session Merkle proof
+│   └── useTreeNodes.ts      # Merkle tree node structure
+├── pages/                   # Route page components
+├── components/
+│   ├── auth/                # Login, Signup, ForgotPassword, ResetPassword forms
+│   ├── layout/              # AppShell, Sidebar, ProtectedRoute, PublicRoute
+│   ├── workflows/           # WorkflowCard, SessionsTable, MerkleTreeView, VerifyPanel, CreateWorkflowModal
+│   ├── sessions/            # ProofDrawer, EventTimeline, EventCard
+│   ├── settings/            # ApiKeyDisplay, CreateClientModal
+│   ├── common/              # StatusBadge, EventTypeBadge, ExecutorBadge, HashDisplay, Skeleton, JsonViewer
+│   └── ui/                  # Radix-based UI primitives (button, input, dialog, tabs, etc.)
+└── assets/                  # Static assets
+```
+
+## Routes
+
+### Public
+
+| Route | Page | Description |
+|---|---|---|
+| `/` | Landing | Marketing landing page with features, how-it-works, and CTA |
+| `/login` | Login | Email/password login form |
+| `/signup` | Signup | Org creation + account registration |
+| `/forgot-password` | Forgot Password | Sends password reset email |
+| `/reset-password` | Reset Password | Resets password using token from email |
+| `/approve/:token` | Approve | Admin approval link for new user accounts |
+
+### Protected
+
+| Route | Page | Description |
+|---|---|---|
+| `/dashboard` | Dashboard | Lists all workflows in a card grid |
+| `/workflows/:workflowId` | Workflow Detail | Tabs: Sessions table, Merkle Tree visualization, Verify panel |
+| `/workflows/:workflowId/sessions/:sessionId` | Session Detail | Status, hashes, dates, proof drawer |
+| `/settings` | Settings | Org info, API client CRUD, sign out |
+| `/profile` | Profile | User email, name, role, status, org |
+
+## Available Scripts
+
+| Script | Command | Description |
+|---|---|---|
+| `dev` | `pnpm dev` | Start development server with HMR |
+| `build` | `pnpm build` | Type-check and build for production |
+| `preview` | `pnpm preview` | Preview production build locally |
+| `lint` | `pnpm lint` | Run ESLint |
